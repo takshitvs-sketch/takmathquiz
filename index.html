@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TAK MATH — Quick Drill</title>
+<style>
+  :root{
+    --bg:#4b18ff; /* purple */
+    --accent:#9be7ff;
+    --panel:#000;
+    --white:#fff;
+    --large: clamp(20px, 6vw, 48px);
+    --xlarge: clamp(28px, 8vw, 72px);
+    font-family: "Helvetica Neue", Arial, sans-serif;
+  }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--white);}
+  .app{
+    max-width:420px;
+    margin:20px auto;
+    min-height:640px;
+    background:linear-gradient(135deg, rgba(0,0,0,0.02), rgba(255,255,255,0.02));
+    border-radius:10px;
+    padding:12px;
+    box-sizing:border-box;
+    position:relative;
+    overflow:hidden;
+  }
+
+  header{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px 6px;
+  }
+  .logo{
+    width:80px;height:46px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#052; font-weight:700;
+  }
+  .title{
+    flex:1;
+    text-align:center;
+    font-weight:800;
+    color:var(--white);
+    letter-spacing:1px;
+  }
+
+  /* Main menu */
+  .menu{padding:10px 6px; display:grid; grid-template-columns:1fr; gap:18px; margin-top:20px;}
+  .op-btn{
+    background:var(--panel);
+    padding:18px;
+    border-radius:6px;
+    text-align:center;
+    font-weight:900;
+    font-size:var(--xlarge);
+    cursor:pointer;
+    color:var(--white);
+    user-select:none;
+    box-shadow:0 6px 18px rgba(0,0,0,0.25);
+  }
+
+  /* Quiz screen */
+  .quiz{
+    display:none;
+    padding:18px 6px;
+  }
+  .info-row{
+    display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;
+  }
+  .progress{font-weight:700;}
+  .timer{
+    display:flex;align-items:center;gap:8px;font-weight:800;
+  }
+  .question-box{
+    background:var(--panel);
+    color:var(--white);
+    padding:22px;
+    border-radius:10px;
+    text-align:center;
+    font-weight:900;
+    font-size:42px;
+    margin-bottom:18px;
+  }
+  .problem{
+    background:#fff;color:#000;padding:22px;border-radius:10px;font-size:36px;font-weight:900;margin-bottom:18px;
+    text-align:center;
+  }
+
+  .options{
+    display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  }
+  .opt{
+    background:#fff;color:#000;padding:18px;border-radius:10px;font-size:28px;font-weight:800;text-align:center;cursor:pointer;
+    user-select:none;
+    box-shadow:0 6px 12px rgba(0,0,0,0.12);
+  }
+  .opt.disabled{opacity:.45;pointer-events:none;}
+
+  /* result */
+  .result{
+    display:none;padding:30px;text-align:center;
+  }
+  .result h2{font-size:48px;margin:18px 0;}
+  .small{font-size:16px;color:rgba(255,255,255,0.9);}
+
+  /* bottom */
+  footer{position:absolute;left:12px;right:12px;bottom:12px;text-align:center;font-size:14px;color:rgba(255,255,255,0.8);}
+  .hidden{display:none!important;}
+  @media (min-width:560px){
+    .app{max-width:520px;}
+  }
+</style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <div class="logo" id="logo">TAK</div>
+      <div class="title">TAK MATH — Speed Drill</div>
+      <div style="width:36px;"></div>
+    </header>
+
+    <!-- MENU -->
+    <main id="menu">
+      <div style="padding:8px;color:rgba(255,255,255,0.95);font-weight:700;">Choose operation</div>
+      <div class="menu">
+        <div class="op-btn" data-op="add">addition</div>
+        <div class="op-btn" data-op="sub">subtraction</div>
+        <div class="op-btn" data-op="mul">multiplication</div>
+        <div class="op-btn" data-op="div">division</div>
+      </div>
+      <div style="margin-top:18px;padding:10px;background:rgba(255,255,255,0.04);border-radius:8px;">
+        <div style="font-weight:700;margin-bottom:6px;">Settings (change in code as needed)</div>
+        <div class="small">Questions: 20 · Base time per question: 30s · Bonus per correct: +15s (to next question) · Win = ≥15 correct</div>
+      </div>
+    </main>
+
+    <!-- QUIZ -->
+    <section class="quiz" id="quiz">
+      <div class="info-row">
+        <div class="progress" id="progress">Q 1 / 20</div>
+        <div class="timer"><div id="clockEmoji">⏰</div><div id="timeLeft">30s</div></div>
+      </div>
+
+      <div class="question-box">
+        <div style="font-size:14px;opacity:.9">Type</div>
+        <div id="opName" style="font-size:24px;margin-top:6px;"></div>
+      </div>
+
+      <div class="problem" id="problem">43 + 32</div>
+
+      <div class="options" id="options">
+        <!-- options inserted by JS -->
+      </div>
+
+      <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:center;">
+        <div id="feedback" style="font-weight:700;"></div>
+        <div style="display:flex;gap:8px;">
+          <button id="quit" style="padding:8px 12px;border-radius:8px;border:0;background:#111;color:#fff;cursor:pointer">Quit</button>
+          <button id="skip" style="padding:8px 12px;border-radius:8px;border:0;background:#111;color:#fff;cursor:pointer">Skip</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULT -->
+    <section class="result" id="result">
+      <h2 id="resultTitle">WINNING</h2>
+      <div style="font-size:22px;margin-top:8px;" id="scoreText">15 / 20 correct</div>
+      <div style="margin-top:12px;" class="small" id="detailText">Total time bonus collected: 0s</div>
+      <div style="margin-top:18px;">
+        <button id="restart" style="padding:10px 16px;border-radius:8px;border:0;background:#fff;color:#000;font-weight:800;cursor:pointer">Play again</button>
+      </div>
+    </section>
+
+    <footer>Designed for quick mental practice — replace logo and tweak settings in the script.</footer>
+  </div>
+
+<script>
+/* ---------------- CONFIG - edit here ---------------- */
+const CONFIG = {
+  questionsCount: 20,
+  baseTimePerQuestion: 30,   // seconds
+  bonusSecondsOnCorrect: 15, // added to NEXT question's timer
+  winThreshold: 15           // >= this many correct => WIN
+};
+/* ---------------- end config ---------------- */
+
+let state = {
+  operation: null,
+  qIndex: 0,
+  correctCount: 0,
+  currentAnswer: null,
+  timer: null,
+  timeLeft: CONFIG.baseTimePerQuestion,
+  nextQuestionExtra: 0,
+  totalBonusCollected: 0
+};
+
+const el = {
+  menu: document.getElementById('menu'),
+  quiz: document.getElementById('quiz'),
+  result: document.getElementById('result'),
+  opName: document.getElementById('opName'),
+  problem: document.getElementById('problem'),
+  options: document.getElementById('options'),
+  timeLeft: document.getElementById('timeLeft'),
+  progress: document.getElementById('progress'),
+  feedback: document.getElementById('feedback'),
+  resultTitle: document.getElementById('resultTitle'),
+  scoreText: document.getElementById('scoreText'),
+  detailText: document.getElementById('detailText'),
+  restart: document.getElementById('restart'),
+  quit: document.getElementById('quit'),
+  skip: document.getElementById('skip')
+};
+
+document.querySelectorAll('.op-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    startGame(btn.dataset.op);
+  });
+});
+
+el.restart.addEventListener('click', ()=> { resetToMenu(); });
+el.quit.addEventListener('click', ()=> { if(confirm('Quit the drill?')) resetToMenu(); });
+el.skip.addEventListener('click', ()=> { // treat skip as incorrect and move on
+  markAnswer(false);
+});
+
+function startGame(op){
+  state.operation = op;
+  state.qIndex = 0;
+  state.correctCount = 0;
+  state.nextQuestionExtra = 0;
+  state.totalBonusCollected = 0;
+  el.menu.style.display = 'none';
+  el.result.style.display = 'none';
+  el.quiz.style.display = 'block';
+  el.feedback.textContent = '';
+  nextQuestion();
+}
+
+function resetToMenu(){
+  clearTimer();
+  el.quiz.style.display = 'none';
+  el.result.style.display = 'none';
+  el.menu.style.display = 'block';
+}
+
+function nextQuestion(){
+  clearTimer();
+  if(state.qIndex >= CONFIG.questionsCount){
+    // show result
+    showResult();
+    return;
+  }
+  state.qIndex++;
+  // compute time for this question
+  state.timeLeft = CONFIG.baseTimePerQuestion + state.nextQuestionExtra;
+  // reset nextQuestionExtra (it applies only once)
+  state.nextQuestionExtra = 0;
+  updateUI();
+  // generate question
+  const q = generateQuestion(state.operation);
+  state.currentAnswer = q.answer;
+  el.problem.textContent = q.text;
+  // populate options
+  renderOptions(q.choices);
+  // start timer
+  startTimer();
+}
+
+function updateUI(){
+  el.progress.textContent = `Q ${state.qIndex} / ${CONFIG.questionsCount}`;
+  el.opName.textContent = operationLabel(state.operation);
+  el.timeLeft.textContent = `${state.timeLeft}s`;
+}
+
+function operationLabel(op){
+  if(op === 'add') return 'addition';
+  if(op === 'sub') return 'subtraction';
+  if(op === 'mul') return 'multiplication';
+  if(op === 'div') return 'division';
+  return op;
+}
+
+function generateQuestion(op){
+  // returns { text, answer, choices: [numbers] }
+  let a,b,answer,text;
+  if(op === 'add'){
+    a = rand(5,75); b = rand(5,75);
+    answer = a + b;
+    text = `${a} + ${b}`;
+  } else if(op === 'sub'){
+    a = rand(10,99); b = rand(0, Math.min(80,a));
+    answer = a - b;
+    text = `${a} - ${b}`;
+  } else if(op === 'mul'){
+    a = rand(2,15); b = rand(2,12);
+    answer = a * b;
+    text = `${a} × ${b}`;
+  } else if(op === 'div'){
+    // ensure integer division
+    b = rand(2,12);
+    let k = rand(2,12);
+    a = b * k;
+    answer = k;
+    text = `${a} ÷ ${b}`;
+  } else {
+    // fallback - addition
+    a = rand(1,50); b = rand(1,50);
+    answer = a + b;
+    text = `${a} + ${b}`;
+  }
+
+  // build choices: correct + 3 distractors
+  const choices = [answer];
+  while(choices.length < 4){
+    let delta = Math.max(1, Math.round(Math.abs(answer)*0.2));
+    let candidate = answer + rand(-3*delta, 3*delta);
+    // ensure positive ints and avoid duplicates
+    if(candidate === answer || candidate < 0) continue;
+    if(choices.indexOf(candidate) === -1) choices.push(candidate);
+  }
+  // shuffle
+  shuffle(choices);
+  return {text,answer,choices};
+}
+
+function renderOptions(choices){
+  el.options.innerHTML = '';
+  choices.forEach((c,index)=>{
+    const btn = document.createElement('div');
+    btn.className = 'opt';
+    btn.textContent = `${index+1}) ${c}`;
+    btn.dataset.value = c;
+    btn.addEventListener('click', onOptionClick);
+    el.options.appendChild(btn);
+  });
+}
+
+function onOptionClick(e){
+  const val = Number(e.currentTarget.dataset.value);
+  const correct = (val === state.currentAnswer);
+  // disable options
+  document.querySelectorAll('.opt').forEach(x=>x.classList.add('disabled'));
+  if(correct){
+    e.currentTarget.style.outline = '4px solid #2ecc71';
+    el.feedback.textContent = 'Correct!';
+    state.correctCount++;
+    state.nextQuestionExtra += CONFIG.bonusSecondsOnCorrect;
+    state.totalBonusCollected += CONFIG.bonusSecondsOnCorrect;
+  } else {
+    e.currentTarget.style.outline = '4px solid #ff5252';
+    el.feedback.textContent = 'Wrong.';
+  }
+  // move to next question after a short pause
+  clearTimer();
+  setTimeout(()=>{ el.feedback.textContent=''; nextQuestion(); }, 800);
+}
+
+function markAnswer(correct){
+  // used for skip/timeouts: treat as incorrect
+  if(!correct){
+    el.feedback.textContent = 'Missed / skipped.';
+  }
+  document.querySelectorAll('.opt').forEach(x=>x.classList.add('disabled'));
+  clearTimer();
+  setTimeout(()=>{ el.feedback.textContent=''; nextQuestion(); }, 600);
+}
+
+function startTimer(){
+  updateUI();
+  el.timeLeft.textContent = `${state.timeLeft}s`;
+  state.timer = setInterval(()=>{
+    state.timeLeft--;
+    el.timeLeft.textContent = `${state.timeLeft}s`;
+    if(state.timeLeft <= 0){
+      // time's up -> incorrect and proceed
+      markAnswer(false);
+    }
+  }, 1000);
+}
+
+function clearTimer(){
+  if(state.timer) clearInterval(state.timer);
+  state.timer = null;
+}
+
+function showResult(){
+  clearTimer();
+  el.quiz.style.display = 'none';
+  el.result.style.display = 'block';
+  const correct = state.correctCount;
+  el.scoreText.textContent = `${correct} / ${CONFIG.questionsCount} correct`;
+  el.detailText.textContent = `Total bonus seconds earned: ${state.totalBonusCollected}s`;
+  if(correct >= CONFIG.winThreshold){
+    el.resultTitle.textContent = 'WINNING';
+    el.resultTitle.style.color = '#fff';
+  } else {
+    el.resultTitle.textContent = 'LOSING';
+    el.resultTitle.style.color = '#fff';
+  }
+}
+
+/* ---------------- helpers ---------------- */
+function rand(a,b){
+  return Math.floor(Math.random()*(b-a+1)) + a;
+}
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+
+/* clean up when leaving page (safety) */
+window.addEventListener('beforeunload', ()=> clearTimer());
+</script>
+</body>
+</html>
